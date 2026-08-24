@@ -100,7 +100,6 @@ Thank you for choosing Apex Cloud Solutions for your mission-critical infrastruc
 async function analyzeDocument(req, res) {
   try {
     const summaryLength = req.body.summaryLength || 'medium';
-    const customApiKey = req.headers['x-gemini-key'] || req.body.apiKey || null;
 
     let extractedText = '';
     let documentType = 'unknown';
@@ -167,8 +166,8 @@ async function analyzeDocument(req, res) {
       });
     }
 
-    const summaryResult = await generateSummary(extractedText, summaryLength, customApiKey);
-    const suggestionsResult = await generateImprovementSuggestions(extractedText, customApiKey);
+    const summaryResult = generateSummary(extractedText, summaryLength);
+    const suggestionsResult = generateImprovementSuggestions(extractedText);
     const metrics = calculateReadabilityMetrics(extractedText);
 
     return res.json({
@@ -184,7 +183,7 @@ async function analyzeDocument(req, res) {
         text: summaryResult.summary,
         length: summaryLength,
         keyPoints: summaryResult.keyPoints || [],
-        engine: summaryResult.engine || 'smart-nlp'
+        engine: 'smart-nlp'
       },
       improvementSuggestions: suggestionsResult.suggestions || []
     });
@@ -200,7 +199,6 @@ async function analyzeDocument(req, res) {
 async function resummarizeText(req, res) {
   try {
     const { text, length = 'medium' } = req.body;
-    const customApiKey = req.headers['x-gemini-key'] || req.body.apiKey || null;
 
     if (!text || text.trim().length === 0) {
       return res.status(400).json({
@@ -212,7 +210,7 @@ async function resummarizeText(req, res) {
     const validLengths = ['short', 'medium', 'long'];
     const selectedLength = validLengths.includes(length.toLowerCase()) ? length.toLowerCase() : 'medium';
 
-    const summaryResult = await generateSummary(text, selectedLength, customApiKey);
+    const summaryResult = generateSummary(text, selectedLength);
 
     return res.json({
       success: true,
@@ -220,7 +218,7 @@ async function resummarizeText(req, res) {
         text: summaryResult.summary,
         length: selectedLength,
         keyPoints: summaryResult.keyPoints || [],
-        engine: summaryResult.engine || 'smart-nlp'
+        engine: 'smart-nlp'
       }
     });
   } catch (error) {
