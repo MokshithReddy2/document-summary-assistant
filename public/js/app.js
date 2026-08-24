@@ -31,21 +31,13 @@ document.addEventListener('DOMContentLoaded', () => {
     copyRawTextBtn: document.getElementById('copyRawTextBtn'),
     
     themeToggleBtn: document.getElementById('themeToggleBtn'),
-    themeIcon: document.getElementById('themeIcon'),
-    apiKeyBtn: document.getElementById('apiKeyBtn'),
-    apiKeyModal: document.getElementById('apiKeyModal'),
-    closeModalBtn: document.getElementById('closeModalBtn'),
-    saveApiKeyBtn: document.getElementById('saveApiKeyBtn'),
-    clearApiKeyBtn: document.getElementById('clearApiKeyBtn'),
-    geminiApiKeyInput: document.getElementById('geminiApiKeyInput'),
-    apiKeyStatus: document.getElementById('apiKeyStatus')
+    themeIcon: document.getElementById('themeIcon')
   };
 
   initApp();
 
   function initApp() {
     initTheme();
-    initModal();
     initUploadEvents();
     initResultControls();
     loadSampleDocuments();
@@ -69,54 +61,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.themeIcon) {
       elements.themeIcon.setAttribute('data-lucide', theme === 'dark' ? 'sun' : 'moon');
       if (window.lucide) lucide.createIcons();
-    }
-  }
-
-  function initModal() {
-    const savedKey = API.getApiKey();
-    if (elements.geminiApiKeyInput) {
-      elements.geminiApiKeyInput.value = savedKey ? '••••••••••••••••' : '';
-    }
-    updateApiKeyStatus(savedKey);
-
-    elements.apiKeyBtn.addEventListener('click', () => {
-      elements.apiKeyModal.classList.remove('hidden');
-      const key = API.getApiKey();
-      elements.geminiApiKeyInput.value = key;
-    });
-
-    elements.closeModalBtn.addEventListener('click', () => {
-      elements.apiKeyModal.classList.add('hidden');
-    });
-
-    elements.apiKeyModal.addEventListener('click', (e) => {
-      if (e.target === elements.apiKeyModal) {
-        elements.apiKeyModal.classList.add('hidden');
-      }
-    });
-
-    elements.saveApiKeyBtn.addEventListener('click', () => {
-      const key = elements.geminiApiKeyInput.value.trim();
-      API.setApiKey(key);
-      updateApiKeyStatus(key);
-      elements.apiKeyModal.classList.add('hidden');
-      UI.showToast('API Key settings saved!', 'success');
-    });
-
-    elements.clearApiKeyBtn.addEventListener('click', () => {
-      API.setApiKey('');
-      elements.geminiApiKeyInput.value = '';
-      updateApiKeyStatus('');
-      UI.showToast('API Key cleared. Using Smart NLP Engine.', 'info');
-    });
-  }
-
-  function updateApiKeyStatus(key) {
-    if (!elements.apiKeyStatus) return;
-    if (key && key.length > 0) {
-      elements.apiKeyStatus.innerHTML = '<span style="color:var(--success)">✓ Google Gemini AI Key Configured</span>';
-    } else {
-      elements.apiKeyStatus.innerHTML = '<span style="color:var(--text-muted)">Using Built-in Smart NLP Engine (Offline Ready)</span>';
     }
   }
 
