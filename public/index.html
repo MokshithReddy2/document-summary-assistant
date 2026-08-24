@@ -27,10 +27,6 @@
         </div>
       </div>
       <div class="header-actions">
-        <button id="apiKeyBtn" class="btn btn-secondary btn-sm" title="Configure AI API Key (Optional)">
-          <i data-lucide="key"></i>
-          <span class="btn-text">API Key</span>
-        </button>
         <button id="themeToggleBtn" class="btn btn-icon" title="Toggle Theme" aria-label="Toggle dark/light theme">
           <i data-lucide="sun" id="themeIcon"></i>
         </button>
@@ -278,34 +274,6 @@
       </div>
     </section>
   </main>
-
-  <div id="apiKeyModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 id="modalTitle" class="modal-title"><i data-lucide="sparkles"></i> AI Configuration</h3>
-        <button type="button" id="closeModalBtn" class="btn btn-icon btn-sm" aria-label="Close modal">
-          <i data-lucide="x"></i>
-        </button>
-      </div>
-      <div class="modal-body">
-        <p class="modal-description">
-          The application comes with a built-in <strong>Smart NLP Engine</strong> that runs immediately without any setup.
-        </p>
-        <p class="modal-description">
-          Optionally, you can provide a <strong>Google Gemini API Key</strong> (Free Tier) for generative neural summaries.
-        </p>
-        <div class="input-group">
-          <label for="geminiApiKeyInput" class="input-label">Gemini API Key (Optional):</label>
-          <input type="password" id="geminiApiKeyInput" class="text-input" placeholder="AIzaSy...">
-        </div>
-        <div class="api-key-status" id="apiKeyStatus">No custom API key set (Using Smart NLP Engine)</div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" id="clearApiKeyBtn" class="btn btn-secondary">Clear Key</button>
-        <button type="button" id="saveApiKeyBtn" class="btn btn-primary">Save Settings</button>
-      </div>
-    </div>
-  </div>
 
   <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
