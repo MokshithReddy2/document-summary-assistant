@@ -24,7 +24,7 @@ const PASSIVE_INDICATORS = [
   'is considered', 'was found', 'were given', 'is being processed'
 ];
 
-function generateHeuristicSuggestions(text) {
+function generateImprovementSuggestions(text) {
   const cleaned = cleanText(text);
   const metrics = calculateReadabilityMetrics(cleaned);
   const sentences = splitIntoSentences(cleaned);
@@ -137,79 +137,7 @@ function generateHeuristicSuggestions(text) {
   };
 }
 
-async function generateAiSuggestions(text, apiKey) {
-  const effectiveKey = apiKey || process.env.GEMINI_API_KEY;
-  if (!effectiveKey) {
-    return generateHeuristicSuggestions(text);
-  }
-
-  const prompt = `Analyze this document and provide 4-6 specific, actionable improvement suggestions covering:
-- Readability & Flow
-- Structural Hierarchy
-- Clarity & Conciseness
-- Tone & Audience Engagement
-
-Respond ONLY in valid JSON matching this schema:
-{
-  "suggestions": [
-    {
-      "category": "Readability | Structure | Clarity | Tone & Style | Impact",
-      "priority": "High | Medium | Low",
-      "title": "Short title",
-      "description": "Actionable, specific recommendation with example if relevant"
-    }
-  ]
-}
-
-Document:
-"""
-${text.slice(0, 10000)}
-"""`;
-
-  try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${effectiveKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.3,
-          responseMimeType: 'application/json'
-        }
-      })
-    });
-
-    if (!response.ok) {
-      return generateHeuristicSuggestions(text);
-    }
-
-    const data = await response.json();
-    const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!candidateText) return generateHeuristicSuggestions(text);
-
-    const parsed = JSON.parse(candidateText);
-    const metrics = calculateReadabilityMetrics(text);
-
-    return {
-      metrics,
-      suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : generateHeuristicSuggestions(text).suggestions
-    };
-  } catch (err) {
-    console.warn('AI suggestions error, using heuristics:', err.message);
-    return generateHeuristicSuggestions(text);
-  }
-}
-
-async function generateImprovementSuggestions(text, customApiKey = null) {
-  const effectiveKey = customApiKey || process.env.GEMINI_API_KEY;
-  if (effectiveKey) {
-    return await generateAiSuggestions(text, effectiveKey);
-  } else {
-    return generateHeuristicSuggestions(text);
-  }
-}
-
 module.exports = {
   generateImprovementSuggestions,
-  generateHeuristicSuggestions
+  generateHeuristicSuggestions: generateImprovementSuggestions
 };
