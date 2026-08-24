@@ -1,33 +1,12 @@
 const API = {
-  getApiKey() {
-    return localStorage.getItem('doc_summary_gemini_key') || '';
-  },
-
-  setApiKey(key) {
-    if (key && key.trim().length > 0) {
-      localStorage.setItem('doc_summary_gemini_key', key.trim());
-    } else {
-      localStorage.removeItem('doc_summary_gemini_key');
-    }
-  },
-
   async analyzeDocument(fileOrSample, summaryLength = 'medium') {
-    const apiKey = this.getApiKey();
-    const headers = {};
-    if (apiKey) {
-      headers['x-gemini-key'] = apiKey;
-    }
-
-    let body;
     if (fileOrSample instanceof File) {
-      body = new FormData();
+      const body = new FormData();
       body.append('document', fileOrSample);
       body.append('summaryLength', summaryLength);
-      if (apiKey) body.append('apiKey', apiKey);
 
       const response = await fetch('/api/analyze-document', {
         method: 'POST',
-        headers,
         body
       });
 
@@ -37,14 +16,12 @@ const API = {
       }
       return data;
     } else if (typeof fileOrSample === 'object' && fileOrSample.sampleId) {
-      headers['Content-Type'] = 'application/json';
       const response = await fetch('/api/analyze-document', {
         method: 'POST',
-        headers,
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sampleId: fileOrSample.sampleId,
-          summaryLength,
-          apiKey
+          summaryLength
         })
       });
 
@@ -59,19 +36,12 @@ const API = {
   },
 
   async resummarizeText(text, length = 'medium') {
-    const apiKey = this.getApiKey();
-    const headers = { 'Content-Type': 'application/json' };
-    if (apiKey) {
-      headers['x-gemini-key'] = apiKey;
-    }
-
     const response = await fetch('/api/re-summarize', {
       method: 'POST',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         text,
-        length,
-        apiKey
+        length
       })
     });
 
