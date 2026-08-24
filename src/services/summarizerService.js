@@ -96,7 +96,11 @@ function extractKeyPoints(sentences, scoredSentences, count = 5) {
   return selected.map(s => s.sentence);
 }
 
-function generateNlpSummary(text, length = 'medium') {
+function generateSummary(text, length = 'medium') {
+  if (!text || text.trim().length === 0) {
+    throw new Error('No text provided for summary generation.');
+  }
+
   const cleaned = cleanText(text);
   const sentences = splitIntoSentences(cleaned);
   const words = tokenizeWords(cleaned);
@@ -153,92 +157,8 @@ function generateNlpSummary(text, length = 'medium') {
   };
 }
 
-async function generateAiSummary(text, length = 'medium', apiKey) {
-  const effectiveKey = apiKey || process.env.GEMINI_API_KEY;
-  if (!effectiveKey) {
-    return generateNlpSummary(text, length);
-  }
-
-  const lengthInstructions = {
-    short: 'Create a concise 2-3 sentence executive summary that captures the absolute core message and outcome.',
-    medium: 'Create a well-structured summary of 1-2 balanced paragraphs covering background, primary findings, and key takeaways.',
-    long: 'Create a comprehensive multi-section summary with an Overview paragraph, Deep-Dive Insights, and Strategic Implications.'
-  };
-
-  const prompt = `You are a Document Summary Assistant. Analyze the following document text and produce a smart summary.
-
-Instructions:
-1. Summary Length: ${length.toUpperCase()} - ${lengthInstructions[length] || lengthInstructions.medium}
-2. Extract 4-6 distinct Key Points and Main Ideas that highlight crucial information.
-3. Respond ONLY in valid JSON format matching this exact schema:
-{
-  "summary": "The complete summary text here...",
-  "keyPoints": [
-    "Key point 1...",
-    "Key point 2...",
-    "Key point 3...",
-    "Key point 4..."
-  ]
-}
-
-Document Content:
-"""
-${text.slice(0, 15000)}
-"""`;
-
-  try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${effectiveKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.2,
-          responseMimeType: 'application/json'
-        }
-      })
-    });
-
-    if (!response.ok) {
-      console.warn('Gemini API returned status', response.status, '- Falling back to NLP summarizer');
-      return generateNlpSummary(text, length);
-    }
-
-    const data = await response.json();
-    const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!candidateText) {
-      return generateNlpSummary(text, length);
-    }
-
-    const parsed = JSON.parse(candidateText);
-    return {
-      summary: parsed.summary || '',
-      keyPoints: Array.isArray(parsed.keyPoints) ? parsed.keyPoints : [],
-      summaryLength: length,
-      engine: 'gemini-ai'
-    };
-  } catch (aiError) {
-    console.warn('AI Summary error, falling back to NLP summarizer:', aiError.message);
-    return generateNlpSummary(text, length);
-  }
-}
-
-async function generateSummary(text, length = 'medium', customApiKey = null) {
-  if (!text || text.trim().length === 0) {
-    throw new Error('No text provided for summary generation.');
-  }
-
-  const effectiveKey = customApiKey || process.env.GEMINI_API_KEY;
-  if (effectiveKey) {
-    return await generateAiSummary(text, length, effectiveKey);
-  } else {
-    return generateNlpSummary(text, length);
-  }
-}
-
 module.exports = {
   generateSummary,
-  generateNlpSummary,
-  generateAiSummary,
+  generateNlpSummary: generateSummary,
   extractKeyPoints
 };
