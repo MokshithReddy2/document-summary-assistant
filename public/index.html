@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Summary Assistant - Smart PDF & OCR Document Summaries</title>
+  <meta name="description" content="AI-powered Document Summary Assistant. Upload PDF documents and scanned images to extract text via OCR, generate smart summaries with custom lengths, extract key points, and receive document improvement suggestions.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <header class="app-header">
+    <div class="container header-container">
+      <div class="brand">
+        <div class="brand-icon">
+          <i data-lucide="file-text"></i>
+        </div>
+        <div class="brand-text">
+          <h1>Document Summary Assistant</h1>
+          <span class="badge badge-accent">Production Ready</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="apiKeyBtn" class="btn btn-secondary btn-sm" title="Configure AI API Key (Optional)">
+          <i data-lucide="key"></i>
+          <span class="btn-text">API Key</span>
+        </button>
+        <button id="themeToggleBtn" class="btn btn-icon" title="Toggle Theme" aria-label="Toggle dark/light theme">
+          <i data-lucide="sun" id="themeIcon"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container app-main">
+    <section class="hero-section text-center">
+      <h2 class="hero-title">Transform Any Document into <span class="gradient-text">Smart Insights</span></h2>
+      <p class="hero-subtitle">Upload multi-page PDFs or scanned document images. Extract text via high-precision PDF parsing & OCR, generate customizable summaries, highlight key points, and get actionable writing improvements.</p>
+      
+      <div class="feature-pills">
+        <span class="pill"><i data-lucide="file-check"></i> PDF Parsing</span>
+        <span class="pill"><i data-lucide="scan"></i> Tesseract OCR</span>
+        <span class="pill"><i data-lucide="sparkles"></i> Smart Summaries (Short / Medium / Long)</span>
+        <span class="pill"><i data-lucide="list-checks"></i> Key Points</span>
+        <span class="pill"><i data-lucide="lightbulb"></i> Improvement Suggestions</span>
+      </div>
+    </section>
+
+    <section id="uploadSection" class="card upload-card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <h3 class="card-title"><i data-lucide="upload-cloud"></i> Upload Document</h3>
+          <p class="card-subtitle">Select or drag & drop any PDF document or scanned image file</p>
+        </div>
+      </div>
+
+      <div id="dropZone" class="dropzone" tabindex="0" role="button" aria-label="File upload dropzone">
+        <input type="file" id="fileInput" accept=".pdf,image/png,image/jpeg,image/jpg,image/webp,image/bmp,image/tiff" class="file-input-hidden">
+        
+        <div class="dropzone-content">
+          <div class="dropzone-icon-wrap">
+            <i data-lucide="file-up" class="dropzone-icon"></i>
+          </div>
+          <h4 class="dropzone-heading">Drag & drop your document here</h4>
+          <p class="dropzone-text">or <span class="text-link">browse from your computer</span></p>
+          <div class="supported-formats">
+            <span class="format-tag">PDF</span>
+            <span class="format-tag">PNG</span>
+            <span class="format-tag">JPG / JPEG</span>
+            <span class="format-tag">WEBP</span>
+            <span class="format-tag">Scanned Images</span>
+          </div>
+          <span class="max-size-note">Maximum file size: 25 MB</span>
+        </div>
+
+        <div id="selectedFilePreview" class="selected-file-preview hidden">
+          <div class="file-info-row">
+            <div class="file-icon-box">
+              <i data-lucide="file" id="previewFileIcon"></i>
+            </div>
+            <div class="file-details">
+              <span id="previewFileName" class="file-name">document.pdf</span>
+              <span id="previewFileSize" class="file-size">1.2 MB</span>
+            </div>
+            <button type="button" id="removeFileBtn" class="btn btn-icon btn-sm" title="Remove file">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="upload-options-row">
+        <div class="option-group">
+          <label class="option-label" for="initialLengthSelect">
+            <i data-lucide="sliders"></i> Desired Summary Length:
+          </label>
+          <div class="segmented-control" role="radiogroup" aria-label="Summary Length">
+            <button type="button" class="segment-btn" data-length="short" role="radio" aria-checked="false">
+              Short
+            </button>
+            <button type="button" class="segment-btn active" data-length="medium" role="radio" aria-checked="true">
+              Medium
+            </button>
+            <button type="button" class="segment-btn" data-length="long" role="radio" aria-checked="false">
+              Long
+            </button>
+          </div>
+        </div>
+
+        <button type="button" id="processDocBtn" class="btn btn-primary btn-lg" disabled>
+          <i data-lucide="zap"></i>
+          <span>Process & Summarize</span>
+        </button>
+      </div>
+
+      <div class="sample-documents-section">
+        <div class="sample-header">
+          <span class="sample-title"><i data-lucide="flask-conical"></i> Or try with preloaded sample documents:</span>
+        </div>
+        <div class="sample-cards-grid" id="sampleCardsContainer">
+          <div class="sample-card-skeleton">Loading samples...</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="processingSection" class="card processing-card hidden">
+      <div class="processing-header text-center">
+        <div class="spinner-pulse"></div>
+        <h3 class="processing-title" id="processingTitle">Processing Document...</h3>
+        <p class="processing-subtitle" id="processingSubtitle">Extracting text and running smart intelligence engine</p>
+      </div>
+
+      <div class="step-progress-tracker">
+        <div class="step-item active" id="stepUpload">
+          <div class="step-circle"><i data-lucide="upload"></i></div>
+          <span class="step-label">Upload File</span>
+        </div>
+        <div class="step-line" id="line1"></div>
+        <div class="step-item" id="stepExtract">
+          <div class="step-circle"><i data-lucide="cpu"></i></div>
+          <span class="step-label">Text / OCR Extraction</span>
+        </div>
+        <div class="step-line" id="line2"></div>
+        <div class="step-item" id="stepSummarize">
+          <div class="step-circle"><i data-lucide="sparkles"></i></div>
+          <span class="step-label">Smart Summarization</span>
+        </div>
+        <div class="step-line" id="line3"></div>
+        <div class="step-item" id="stepSuggestions">
+          <div class="step-circle"><i data-lucide="check-check"></i></div>
+          <span class="step-label">Suggestions & Insights</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="resultsSection" class="results-section hidden">
+      <div class="doc-info-bar card">
+        <div class="doc-meta-info">
+          <div class="doc-badge-type" id="resultDocTypeBadge">PDF Document</div>
+          <h3 class="doc-title" id="resultDocName">document_name.pdf</h3>
+        </div>
+        
+        <div class="doc-metrics-chips">
+          <div class="metric-chip" title="Word Count">
+            <i data-lucide="align-left"></i>
+            <span id="metricWordCount">0 words</span>
+          </div>
+          <div class="metric-chip" title="Estimated Reading Time">
+            <i data-lucide="clock"></i>
+            <span id="metricReadingTime">0 min read</span>
+          </div>
+          <div class="metric-chip chip-highlight" title="Flesch Reading Ease Score">
+            <i data-lucide="gauge"></i>
+            <span id="metricReadabilityScore">Readability: --</span>
+          </div>
+        </div>
+
+        <button type="button" id="resetBtn" class="btn btn-secondary btn-sm" title="Upload a different document">
+          <i data-lucide="refresh-cw"></i> Upload Another
+        </button>
+      </div>
+
+      <div class="results-grid">
+        <div class="results-primary-col">
+          <div class="card summary-card">
+            <div class="card-header summary-card-header">
+              <div class="summary-title-wrap">
+                <h3 class="card-title"><i data-lucide="sparkles" class="text-primary"></i> Smart Summary</h3>
+                <span class="engine-badge" id="summaryEngineBadge">Smart NLP Engine</span>
+              </div>
+
+              <div class="summary-length-tabs" role="tablist" aria-label="Summary Length Control">
+                <button type="button" class="tab-btn" data-length="short" role="tab" id="tabShort" title="Concise 2-3 sentence overview">
+                  Short
+                </button>
+                <button type="button" class="tab-btn active" data-length="medium" role="tab" id="tabMedium" title="Standard balanced summary">
+                  Medium
+                </button>
+                <button type="button" class="tab-btn" data-length="long" role="tab" id="tabLong" title="Comprehensive detailed breakdown">
+                  Long
+                </button>
+              </div>
+            </div>
+
+            <div class="summary-content-body">
+              <div id="summaryTextContainer" class="summary-prose"></div>
+            </div>
+
+            <div class="summary-footer-actions">
+              <div class="footer-stats">
+                <span id="summaryWordCountBadge" class="stat-text">-- words in summary</span>
+              </div>
+              <div class="footer-buttons">
+                <button type="button" id="copySummaryBtn" class="btn btn-secondary btn-sm">
+                  <i data-lucide="copy"></i> Copy Summary
+                </button>
+                <button type="button" id="downloadSummaryBtn" class="btn btn-secondary btn-sm">
+                  <i data-lucide="download"></i> Download (.txt)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card keypoints-card">
+            <div class="card-header">
+              <div class="card-title-group">
+                <h3 class="card-title"><i data-lucide="list-checks" class="text-accent"></i> Key Points & Main Ideas</h3>
+                <p class="card-subtitle">Essential highlights and core takeaways extracted from the text</p>
+              </div>
+            </div>
+            <div class="keypoints-list" id="keyPointsContainer"></div>
+          </div>
+
+          <div class="card text-inspector-card">
+            <button type="button" class="accordion-trigger" id="textInspectorToggle" aria-expanded="false">
+              <span class="accordion-title">
+                <i data-lucide="file-code"></i> View Extracted Text (<span id="extractedLengthCount">0 chars</span>)
+              </span>
+              <i data-lucide="chevron-down" class="accordion-icon" id="accordionChevron"></i>
+            </button>
+            <div class="accordion-content hidden" id="textInspectorContent">
+              <div class="text-inspector-toolbar">
+                <button type="button" id="copyRawTextBtn" class="btn btn-xs btn-secondary">
+                  <i data-lucide="copy"></i> Copy Full Text
+                </button>
+              </div>
+              <pre class="raw-text-view" id="rawTextDisplay"></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="results-secondary-col">
+          <div class="card suggestions-card">
+            <div class="card-header">
+              <div class="card-title-group">
+                <h3 class="card-title"><i data-lucide="lightbulb" class="text-warning"></i> Improvement Suggestions</h3>
+                <p class="card-subtitle">Actionable advice to enhance readability, structure, and clarity</p>
+              </div>
+            </div>
+            
+            <div class="readability-card-mini">
+              <div class="readability-score-circle" id="readabilityScoreCircle">--</div>
+              <div class="readability-details">
+                <div class="score-label">Flesch Reading Ease</div>
+                <div class="score-description" id="readabilityDesc">Calculating...</div>
+              </div>
+            </div>
+
+            <div class="suggestions-list" id="suggestionsContainer"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="apiKeyModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modalTitle" class="modal-title"><i data-lucide="sparkles"></i> AI Configuration</h3>
+        <button type="button" id="closeModalBtn" class="btn btn-icon btn-sm" aria-label="Close modal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-description">
+          The application comes with a built-in <strong>Smart NLP Engine</strong> that runs immediately without any setup.
+        </p>
+        <p class="modal-description">
+          Optionally, you can provide a <strong>Google Gemini API Key</strong> (Free Tier) for generative neural summaries.
+        </p>
+        <div class="input-group">
+          <label for="geminiApiKeyInput" class="input-label">Gemini API Key (Optional):</label>
+          <input type="password" id="geminiApiKeyInput" class="text-input" placeholder="AIzaSy...">
+        </div>
+        <div class="api-key-status" id="apiKeyStatus">No custom API key set (Using Smart NLP Engine)</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="clearApiKeyBtn" class="btn btn-secondary">Clear Key</button>
+        <button type="button" id="saveApiKeyBtn" class="btn btn-primary">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <footer class="app-footer">
+    <div class="container footer-container">
+      <p class="footer-project-info">Document Summary Assistant • Technical Assessment Project • Node.js, Express & Vanilla HTML/CSS/JS</p>
+      <div class="footer-support">
+        <span class="support-label"><i data-lucide="help-circle"></i> Need Support? Contact the Developer:</span>
+        <div class="support-links">
+          <a href="https://www.linkedin.com/in/mokshith-reddy-53836b320/" target="_blank" rel="noopener noreferrer" class="footer-link">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle;"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.45a1.6 1.6 0 0 0-1.6 1.6 1.6 1.6 0 0 0 1.6 1.6 1.6 1.6 0 0 0 1.6-1.6 1.6 1.6 0 0 0-1.6-1.6Z"/></svg>
+            <span>LinkedIn</span>
+          </a>
+          <span class="separator">•</span>
+          <a href="mailto:mokshithreddynarreddy1@gmail.com" class="footer-link">
+            <i data-lucide="mail"></i>
+            <span>mokshithreddynarreddy1@gmail.com</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+    });
+  </script>
+</body>
+</html>
